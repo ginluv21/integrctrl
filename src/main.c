@@ -11,8 +11,12 @@ int main(int argc, char *argv[]) {
     printf("Файл базы данных: %s\n", opts.db_file);
     printf("Папка для анализа: %s\n", opts.target_dir);
 
-    if(opts.mode == 's'){
-        printf("\n[Сохранение] Начинаем обход директории %s...\n", opts.target_dir);
+    if (opts.mode == 's') {
+        printf("\n[Сохранение] Начинаем обход директории %s...\n",
+               opts.target_dir);
+
+        // Вызываем функцию сканирования папки
+        scan_directory(opts.target_dir);
     } else {
         printf("\n[Проверка] Начинаем сверку с базой %s...\n", opts.db_file);
     }

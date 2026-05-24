@@ -9,8 +9,6 @@
 
 #define NAME_LEN 256
 
-#define NAME_LEN 256
-
 enum { TYPE_DIR, TYPE_FILE };
 
 typedef struct file_rec {
@@ -30,5 +28,6 @@ typedef struct prog_opts {
 
 void parse_args(int argc, char *argv[], prog_opts *opts);
 void print_usage(const char *prog_name);
+void scan_directory(const char *dir_path);
 
 #endif

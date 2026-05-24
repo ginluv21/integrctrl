@@ -11,7 +11,7 @@ typedef struct {
     file_rec **res;
     size_t len;
     size_t cap;
-    int owns_data; /* 1 - free каждый элемент, 0 - не трогать */
+    int owns_data; // 1 - free каждый элемент, 0 - не трогать
 } vector_t;
 
 typedef struct {
