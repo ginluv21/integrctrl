@@ -1,14 +1,9 @@
 CC = gcc
-CFLAGS = -Wall -std=c99
+CFLAGS = -Wall -std=c99 -I include
 
-SRC = src/main.c src/integrctrl.c src/md5.c
-TARGET = build/integrctrl
-
-all: $(TARGET)
-
-$(TARGET): $(SRC)
+all:
 	mkdir -p build
-	$(CC) $(CFLAGS) -I include $(SRC) -o $(TARGET)
+	$(CC) $(CFLAGS) src/*.c -o build/integrctrl
 
 clean:
 	rm -rf build
