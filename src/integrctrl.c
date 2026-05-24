@@ -1,1 +1,1 @@
-#include "../include/integrctrl.h"
+#include "integrctrl.h"

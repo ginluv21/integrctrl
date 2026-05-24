@@ -1,4 +1,4 @@
-#include "../include/integrctrl.h"
+#include "integrctrl.h"
 
 int main(int argc, char *argv[]) {
     return 0;
