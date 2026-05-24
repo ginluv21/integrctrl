@@ -49,7 +49,8 @@ static int md5_equal(unsigned char *a, unsigned char *b) {
     return 1;
 }
 
-void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix) {
+void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix,
+                     int stats[4], int recursive) {
     char old_path[2048];
     char new_path[2048];
     char search[4096];
@@ -64,8 +65,9 @@ void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix) {
         build_path(old_vec, old, old_path, sizeof(old_path));
 
         if (has_prefix) {
-            int match = strcmp(old_path, prefix) == 0 ||
-                        (strncmp(old_path, prefix, plen) == 0 && old_path[plen] == '/');
+            int match =
+                strcmp(old_path, prefix) == 0 ||
+                (strncmp(old_path, prefix, plen) == 0 && old_path[plen] == '/');
             if (!match)
                 continue;
             if (strcmp(old_path, prefix) == 0)
@@ -75,16 +77,24 @@ void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix) {
             strncpy(search, old_path, sizeof(search) - 1);
         }
 
+        if (!recursive && strchr(search, '/') != NULL)
+            continue;
+
         file_rec *cur = find_by_path(new_vec, search);
         const char *t = (old->type == TYPE_FILE) ? "FILE" : "DIR ";
 
+        const char *status;
         if (cur == NULL) {
-            printf("%-20.20s  [%s]  MISSING\n", search, t);
+            status = "MISSING";
+            stats[2]++;
         } else if (old->type == TYPE_FILE && !md5_equal(old->md5, cur->md5)) {
-            printf("%-20.20s  [%s]  CHANGED\n", search, t);
+            status = "CHANGED";
+            stats[1]++;
         } else {
-            printf("%-20.20s  [%s]  OK\n", search, t);
+            status = "OK";
+            stats[0]++;
         }
+        printf("%-23.23s  [%s]  %-7s\n", search, t, status);
     }
 
     for (size_t i = 0; i < vec_len(new_vec); i++) {
@@ -99,9 +109,13 @@ void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix) {
         else
             strncpy(search, new_path, sizeof(search) - 1);
 
+        if (!recursive && strchr(new_path, '/') != NULL)
+            continue;
+
         if (find_by_path(old_vec, search) == NULL) {
             const char *t = (cur->type == TYPE_FILE) ? "FILE" : "DIR ";
-            printf("%-20.20s  [%s]  NEW\n", new_path, t);
+            printf("%-23.23s  [%s]  %-7s\n", new_path, t, "NEW");
+            stats[3]++;
         }
     }
 }

@@ -3,6 +3,7 @@
 #include "integrctrl.h"
 #include <dirent.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 void print_usage(const char *prog_name) {
@@ -153,7 +154,7 @@ void run_save(prog_opts *opts) {
     }
 
     if (db_save(opts->db_file, vec, opts->recursive) == 0)
-        printf("[Сохранение] База записана в %s\n", opts->db_file);
+        printf("[Сохранение] База записана в %s (%zu объектов)\n", opts->db_file, vec_len(vec));
     else
         fprintf(stderr, "[Сохранение] Не удалось записать базу\n");
 
@@ -164,7 +165,8 @@ void run_check(prog_opts *opts) {
     printf("\n[Проверка] Начинаем сверку с базой %s...\n", opts->db_file);
 
     int db_recursive = 0;
-    vector_t *old_vec = db_load(opts->db_file, &db_recursive);
+    time_t saved_at = 0;
+    vector_t *old_vec = db_load(opts->db_file, &db_recursive, &saved_at);
     if (old_vec == NULL) {
         fprintf(stderr, "Ошибка: не удалось загрузить базу %s\n", opts->db_file);
         return;
@@ -198,6 +200,10 @@ void run_check(prog_opts *opts) {
         }
     }
 
+    char time_buf[64];
+    struct tm *tm_info = localtime(&saved_at);
+    strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", tm_info);
+    printf("[Проверка] База сохранена: %s\n", time_buf);
     printf("[Проверка] Директория: %s\n", target_dir);
 
     vector_t *new_vec = vec_create(10);
@@ -212,11 +218,16 @@ void run_check(prog_opts *opts) {
     vec_push(new_vec, root_rec);
 
     // Рекурсия: берем из аргументов, если не указана - из базы
-    int recursive = opts->recursive ? 1 : db_recursive;
+    int recursive = opts->recursive;
     scan_directory(target_dir, root_rec->id, &next_id, new_vec, recursive);
 
-    printf("\n");
-    check_integrity(old_vec, new_vec, prefix[0] ? prefix : NULL);
+    printf("\n----------------------------------------\n");
+    int stats[4] = {0, 0, 0, 0}; // OK, CHANGED, MISSING, NEW
+    check_integrity(old_vec, new_vec, prefix[0] ? prefix : NULL, stats, recursive);
+    printf("----------------------------------------\n");
+    printf("OK: %d  CHANGED: %d  MISSING: %d  NEW: %d\n",
+           stats[0], stats[1], stats[2], stats[3]);
+    printf("[Проверка] Объектов в базе: %zu, в текущем скане: %zu\n", vec_len(old_vec), vec_len(new_vec));
 
     vec_destroy(old_vec);
     vec_destroy(new_vec);

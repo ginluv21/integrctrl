@@ -15,6 +15,7 @@ int db_save(const char *path, vector_t *vec, int recursive) {
     hdr.magic = IC_MAGIC;
     hdr.record_count = (unsigned int)vec_len(vec);
     hdr.recursive = recursive;
+    hdr.saved_at = time(NULL);
 
     fwrite(&hdr, sizeof(db_header), 1, f);
 
@@ -27,7 +28,7 @@ int db_save(const char *path, vector_t *vec, int recursive) {
     return 0;
 }
 
-vector_t *db_load(const char *path, int *recursive_out) {
+vector_t *db_load(const char *path, int *recursive_out, time_t *saved_at_out) {
     if (path == NULL)
         return NULL;
 
@@ -54,6 +55,8 @@ vector_t *db_load(const char *path, int *recursive_out) {
 
     if (recursive_out != NULL)
         *recursive_out = hdr.recursive;
+    if (saved_at_out != NULL)
+        *saved_at_out = hdr.saved_at;
 
     vector_t *vec = vec_create(hdr.record_count);
     if (vec == NULL) {
