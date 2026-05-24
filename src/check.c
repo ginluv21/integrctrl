@@ -84,17 +84,21 @@ void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix,
         const char *t = (old->type == TYPE_FILE) ? "FILE" : "DIR ";
 
         const char *status;
+        const char *color;
         if (cur == NULL) {
             status = "MISSING";
+            color = "\033[31m";
             stats[2]++;
         } else if (old->type == TYPE_FILE && !md5_equal(old->md5, cur->md5)) {
             status = "CHANGED";
+            color = "\033[33m";
             stats[1]++;
         } else {
             status = "OK";
+            color = "\033[32m";
             stats[0]++;
         }
-        printf("%-23.23s  [%s]  %-7s\n", search, t, status);
+        printf("%-23.23s  [%s]  %s%-7s\033[0m\n", search, t, color, status);
     }
 
     for (size_t i = 0; i < vec_len(new_vec); i++) {
@@ -114,7 +118,7 @@ void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix,
 
         if (find_by_path(old_vec, search) == NULL) {
             const char *t = (cur->type == TYPE_FILE) ? "FILE" : "DIR ";
-            printf("%-23.23s  [%s]  %-7s\n", new_path, t, "NEW");
+            printf("%-23.23s  [%s]  \033[36m%-7s\033[0m\n", new_path, t, "NEW");
             stats[3]++;
         }
     }
