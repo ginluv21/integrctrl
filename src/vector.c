@@ -8,6 +8,7 @@ vector_t *vec_create(size_t ini_cap) {
         ini_cap = 1;
     temp->cap = ini_cap;
     temp->len = 0;
+    temp->owns_data = 1;
 
     temp->data = malloc(temp->cap * sizeof(file_rec *));
     if (temp->data == NULL) {
@@ -32,8 +33,10 @@ vector_t *vec_create(size_t ini_cap) {
 void vec_destroy(vector_t *vec) {
     if (vec == NULL) return;
 
-    for (size_t i = 0; i < vec->len; i++)
-        free(*(vec->data + i));
+    if (vec->owns_data) {
+        for (size_t i = 0; i < vec->len; i++)
+            free(*(vec->data + i));
+    }
 
     free(vec->data);
     free(vec->res);
