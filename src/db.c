@@ -61,27 +61,22 @@ vector_t *db_load(const char *path, int *recursive_out) {
         return NULL;
     }
 
-    vec->owns_data = 0;
-
-    file_rec *block = malloc(hdr.record_count * sizeof(file_rec));
-    if (block == NULL) {
-        fprintf(stderr, "Ошибка выделения памяти\n");
-        vec_destroy(vec);
-        fclose(f);
-        return NULL;
-    }
-
-    if (fread(block, sizeof(file_rec), hdr.record_count, f) !=
-        hdr.record_count) {
-        fprintf(stderr, "Ошибка: файл базы повреждён или обрезан\n");
-        free(block);
-        vec_destroy(vec);
-        fclose(f);
-        return NULL;
-    }
-
     for (unsigned int i = 0; i < hdr.record_count; i++) {
-        vec_push(vec, &block[i]);
+        file_rec *rec = malloc(sizeof(file_rec));
+        if (rec == NULL) {
+            fprintf(stderr, "Ошибка выделения памяти\n");
+            vec_destroy(vec);
+            fclose(f);
+            return NULL;
+        }
+        if (fread(rec, sizeof(file_rec), 1, f) != 1) {
+            fprintf(stderr, "Ошибка: файл базы повреждён или обрезан\n");
+            free(rec);
+            vec_destroy(vec);
+            fclose(f);
+            return NULL;
+        }
+        vec_push(vec, rec);
     }
 
     fclose(f);

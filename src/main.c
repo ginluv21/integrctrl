@@ -1,3 +1,4 @@
+#include "check.h"
 #include "db.h"
 
 int main(int argc, char *argv[]) {
@@ -37,6 +38,32 @@ int main(int argc, char *argv[]) {
 
     } else {
         printf("\n[Проверка] Начинаем сверку с базой %s...\n", opts.db_file);
+
+        int db_recursive = 0;
+        vector_t *old_vec = db_load(opts.db_file, &db_recursive);
+        if (old_vec == NULL) {
+            fprintf(stderr, "Ошибка: не удалось загрузить базу %s\n", opts.db_file);
+            return 1;
+        }
+
+        vector_t *new_vec = vec_create(10);
+        int next_id = 1;
+
+        file_rec *root_rec = malloc(sizeof(file_rec));
+        root_rec->id = next_id++;
+        root_rec->parent_id = 0;
+        root_rec->type = TYPE_DIR;
+        strncpy(root_rec->name, opts.target_dir, NAME_LEN - 1);
+        memset(root_rec->md5, 0, 16);
+        vec_push(new_vec, root_rec);
+
+        scan_directory(opts.target_dir, root_rec->id, &next_id, new_vec);
+
+        printf("\n");
+        check_integrity(old_vec, new_vec);
+
+        vec_destroy(old_vec);
+        vec_destroy(new_vec);
     }
 
     return 0;
