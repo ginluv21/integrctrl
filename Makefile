@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -std=c99 -I include
+CFLAGS = -Wall -I include
 
 all:
 	mkdir -p build
