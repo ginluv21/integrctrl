@@ -1,8 +1,9 @@
-#include "vector.h"
+#include "integrctrl.h"
 
 vector_t *vec_create(size_t ini_cap) {
     vector_t *temp = malloc(sizeof(vector_t));
-    if (temp == NULL) return NULL;
+    if (temp == NULL)
+        return NULL;
 
     if (ini_cap == 0)
         ini_cap = 1;
@@ -31,7 +32,8 @@ vector_t *vec_create(size_t ini_cap) {
 }
 
 void vec_destroy(vector_t *vec) {
-    if (vec == NULL) return;
+    if (vec == NULL)
+        return;
 
     if (vec->owns_data) {
         for (size_t i = 0; i < vec->len; i++)
@@ -44,15 +46,18 @@ void vec_destroy(vector_t *vec) {
 }
 
 static void vec_resize(vector_t *vec, size_t new_cap) {
-    if (vec == NULL) return;
+    if (vec == NULL)
+        return;
     file_rec **temp = realloc(vec->data, new_cap * sizeof(file_rec *));
-    if (temp == NULL) return;
+    if (temp == NULL)
+        return;
     vec->data = temp;
     vec->cap = new_cap;
 }
 
 static int vec_reserve(vector_t *vec) {
-    if (vec == NULL) return 1;
+    if (vec == NULL)
+        return 1;
 
     for (size_t i = 0; i < vec->len; i++)
         *(vec->res + i) = *(vec->data + i);
@@ -70,16 +75,19 @@ static int vec_reserve(vector_t *vec) {
         res_cap = vec->cap + 1;
 
     vec->res = malloc(res_cap * sizeof(file_rec *));
-    if (vec->res == NULL) return 1;
+    if (vec->res == NULL)
+        return 1;
 
     return 0;
 }
 
 int vec_push(vector_t *vec, file_rec *rec) {
-    if (vec == NULL || rec == NULL) return 1;
+    if (vec == NULL || rec == NULL)
+        return 1;
 
     if (vec->len == vec->cap) {
-        if (vec_reserve(vec)) return 1;
+        if (vec_reserve(vec))
+            return 1;
     }
 
     *(vec->data + vec->len) = rec;
@@ -109,12 +117,14 @@ file_rec *vec_get(vector_t *vec, size_t ind) {
 }
 
 size_t vec_len(vector_t *vec) {
-    if (vec == NULL) return 0;
+    if (vec == NULL)
+        return 0;
     return vec->len;
 }
 
 size_t vec_cap(vector_t *vec) {
-    if (vec == NULL) return 0;
+    if (vec == NULL)
+        return 0;
     return vec->cap;
 }
 
@@ -129,14 +139,17 @@ static void vec_shl(vector_t *vec, size_t ind) {
 }
 
 int vec_insert(vector_t *vec, size_t ind, file_rec *rec) {
-    if (vec == NULL || rec == NULL) return 1;
-    if (ind > vec->len) return 1;
+    if (vec == NULL || rec == NULL)
+        return 1;
+    if (ind > vec->len)
+        return 1;
 
     if (ind == vec->len)
         return vec_push(vec, rec);
 
     if (vec->len == vec->cap) {
-        if (vec_reserve(vec)) return 1;
+        if (vec_reserve(vec))
+            return 1;
     }
 
     vec_shr(vec, ind);
@@ -146,8 +159,10 @@ int vec_insert(vector_t *vec, size_t ind, file_rec *rec) {
 }
 
 int vec_remove(vector_t *vec, size_t ind) {
-    if (vec == NULL) return 1;
-    if (ind >= vec->len) return 1;
+    if (vec == NULL)
+        return 1;
+    if (ind >= vec->len)
+        return 1;
 
     if (ind == vec->len - 1) {
         free(vec_pop(vec));
@@ -166,8 +181,10 @@ int vec_remove(vector_t *vec, size_t ind) {
 }
 
 int vec_change(vector_t *vec, size_t ind, file_rec *rec) {
-    if (vec == NULL || rec == NULL) return 1;
-    if (ind >= vec->len) return 1;
+    if (vec == NULL || rec == NULL)
+        return 1;
+    if (ind >= vec->len)
+        return 1;
 
     free(*(vec->data + ind));
     *(vec->data + ind) = rec;
@@ -175,10 +192,12 @@ int vec_change(vector_t *vec, size_t ind, file_rec *rec) {
 }
 
 vector_t *vec_copy(vector_t *vec) {
-    if (vec == NULL) return NULL;
+    if (vec == NULL)
+        return NULL;
 
     vector_t *temp = vec_create(vec->cap);
-    if (temp == NULL) return NULL;
+    if (temp == NULL)
+        return NULL;
 
     for (size_t i = 0; i < vec->len; i++) {
         file_rec *new_rec = malloc(sizeof(file_rec));
@@ -194,7 +213,8 @@ vector_t *vec_copy(vector_t *vec) {
 }
 
 int vec_merge(vector_t *v1, vector_t *v2) {
-    if (v1 == NULL || v2 == NULL) return 1;
+    if (v1 == NULL || v2 == NULL)
+        return 1;
 
     size_t total_len = v1->len + v2->len;
     if (total_len > v1->cap)
@@ -202,7 +222,8 @@ int vec_merge(vector_t *v1, vector_t *v2) {
 
     for (size_t i = 0; i < v2->len; i++) {
         file_rec *new_rec = malloc(sizeof(file_rec));
-        if (new_rec == NULL) return 1;
+        if (new_rec == NULL)
+            return 1;
         memcpy(new_rec, *(v2->data + i), sizeof(file_rec));
         vec_push(v1, new_rec);
     }
@@ -245,7 +266,7 @@ void print_vector(vector_t *vec) {
     for (size_t i = 0; i < vec_len(vec); i++) {
         file_rec *rec = vec_get(vec, i);
         if (rec) {
-            printf("  [%zu] id=%d name=%s type=%d parent_id=%d\n",
+            printf("  [%zu] id=%-5d name=%-15s type=%-5d parent_id=%-5d\n",
                    i, rec->id, rec->name, rec->type, rec->parent_id);
         }
     }

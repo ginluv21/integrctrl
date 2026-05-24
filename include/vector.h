@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "integrctrl.h"
+
+typedef struct file_rec file_rec;
 
 typedef struct {
     file_rec **data;

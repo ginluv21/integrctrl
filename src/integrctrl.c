@@ -46,7 +46,8 @@ void parse_args(int argc, char *argv[], prog_opts *opts) {
     }
 }
 
-void scan_directory(const char *dir_path) {
+void scan_directory(const char *dir_path, int parent_id, int *next_id,
+                    vector_t *vec) {
     DIR *dir = opendir(dir_path);
     if (dir == NULL) {
         fprintf(stderr, "Ошибка: не удалось открыть директорию %s\n", dir_path);
@@ -54,8 +55,6 @@ void scan_directory(const char *dir_path) {
     }
 
     struct dirent *entry;
-
-    printf("=== Содержание папки %s ===\n", dir_path);
 
     while ((entry = readdir(dir)) !=
            NULL) { // Читаем объекты внутри папки один за другим
@@ -66,18 +65,48 @@ void scan_directory(const char *dir_path) {
             continue;
         }
 
-        // Выводим имя объекта
-        printf("Имя: %-20s | ", entry->d_name);
-
-        // Проверяем тип объекта строго по методичке (DT_DIR — папка, DT_REG —
-        // файл)
-        if (entry->d_type == DT_DIR) {
-            printf("Тип: ДИРЕКТОРИЯ\n");
-        } else if (entry->d_type == DT_REG) {
-            printf("Тип: ОБЫЧНЫЙ ФАЙЛ\n");
-        } else {
-            printf("Тип: ДРУГОЙ (игнорируем)\n");
+        // Обрабатываем только папки и файлы
+        if (entry->d_type != DT_DIR && entry->d_type != DT_REG) {
+            continue;
         }
+
+        // Создаем file_rec через malloc
+        file_rec *rec = malloc(sizeof(file_rec));
+        if (rec == NULL) {
+            fprintf(stderr, "Ошибка выделения памяти для файла %s\n",
+                    entry->d_name);
+            continue;
+        }
+
+        rec->id = *next_id; // Заполняем поля
+        (*next_id)++; // счетчик для некс файла
+
+        rec->parent_id = parent_id;
+        strncpy(rec->name, entry->d_name, NAME_LEN - 1);
+        rec->name[NAME_LEN - 1] = '\0';
+        memset(rec->md5, 0, 16); // обнуляем хэш по умолчанию
+
+        if (entry->d_type == DT_REG) { // Обработка файлов и папок
+            rec->type = TYPE_FILE;
+
+            char full_path[1024];
+            snprintf(full_path, sizeof(full_path), "%s/%s", dir_path,
+                     entry->d_name);
+
+            FILE *fp = fopen(full_path, "rb");
+            if (fp != NULL) {
+                md5File(fp, rec->md5); // Считаем MD5
+                fclose(fp);
+            } else {
+                fprintf(stderr, "Ошибка чтения файла: %s\n", full_path);
+            }
+
+        } else if (entry->d_type == DT_DIR) {
+            rec->type =
+                TYPE_DIR; // Для директорий md5 уже заполнен нулями через memset
+        }
+
+        vec_push(vec, rec);
     }
 
     closedir(dir);
