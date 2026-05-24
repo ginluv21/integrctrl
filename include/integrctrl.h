@@ -34,5 +34,7 @@ void print_usage(const char *prog_name); // Функция для вывода �
                                          // использованию программы
 void scan_directory(const char *dir_path, int parent_id, int *next_id,
                     vector_t *vec, int recursive);
+void run_save(prog_opts *opts);
+void run_check(prog_opts *opts);
 
 #endif

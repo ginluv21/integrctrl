@@ -1,9 +1,42 @@
 #include "check.h"
 
-static file_rec *find_by_name(vector_t *vec, const char *name) {
+static file_rec *find_by_id(vector_t *vec, int id) {
     for (size_t i = 0; i < vec_len(vec); i++) {
         file_rec *rec = vec_get(vec, i);
-        if (rec->parent_id != 0 && strcmp(rec->name, name) == 0)
+        if (rec->id == id)
+            return rec;
+    }
+    return NULL;
+}
+
+static void build_path(vector_t *vec, file_rec *rec, char *buf, size_t size) {
+    if (rec->parent_id == 0) {
+        buf[0] = '\0';
+        return;
+    }
+    file_rec *parent = find_by_id(vec, rec->parent_id);
+    if (parent == NULL || parent->parent_id == 0) {
+        strncpy(buf, rec->name, size - 1);
+        buf[size - 1] = '\0';
+        return;
+    }
+    build_path(vec, parent, buf, size);
+    size_t len = strlen(buf);
+    if (len + 1 < size) {
+        buf[len] = '/';
+        buf[len + 1] = '\0';
+        strncat(buf, rec->name, size - len - 2);
+    }
+}
+
+static file_rec *find_by_path(vector_t *vec, const char *path) {
+    char buf[2048];
+    for (size_t i = 0; i < vec_len(vec); i++) {
+        file_rec *rec = vec_get(vec, i);
+        if (rec->parent_id == 0)
+            continue;
+        build_path(vec, rec, buf, sizeof(buf));
+        if (strcmp(buf, path) == 0)
             return rec;
     }
     return NULL;
@@ -16,19 +49,41 @@ static int md5_equal(unsigned char *a, unsigned char *b) {
     return 1;
 }
 
-void check_integrity(vector_t *old_vec, vector_t *new_vec) {
+void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix) {
+    char old_path[2048];
+    char new_path[2048];
+    char search[4096];
+    int has_prefix = (prefix != NULL && prefix[0] != '\0');
+    size_t plen = has_prefix ? strlen(prefix) : 0;
+
     for (size_t i = 0; i < vec_len(old_vec); i++) {
         file_rec *old = vec_get(old_vec, i);
         if (old->parent_id == 0)
             continue;
 
-        file_rec *cur = find_by_name(new_vec, old->name);
-        if (cur == NULL) {
-            printf("%-40s MISSING\n", old->name);
-        } else if (old->type == TYPE_FILE && !md5_equal(old->md5, cur->md5)) {
-            printf("%-40s CHANGED\n", old->name);
+        build_path(old_vec, old, old_path, sizeof(old_path));
+
+        if (has_prefix) {
+            int match = strcmp(old_path, prefix) == 0 ||
+                        (strncmp(old_path, prefix, plen) == 0 && old_path[plen] == '/');
+            if (!match)
+                continue;
+            if (strcmp(old_path, prefix) == 0)
+                continue; // сама подпапка - не выводим
+            strncpy(search, old_path + plen + 1, sizeof(search) - 1);
         } else {
-            printf("%-40s OK\n", old->name);
+            strncpy(search, old_path, sizeof(search) - 1);
+        }
+
+        file_rec *cur = find_by_path(new_vec, search);
+        const char *t = (old->type == TYPE_FILE) ? "FILE" : "DIR ";
+
+        if (cur == NULL) {
+            printf("%-20.20s  [%s]  MISSING\n", search, t);
+        } else if (old->type == TYPE_FILE && !md5_equal(old->md5, cur->md5)) {
+            printf("%-20.20s  [%s]  CHANGED\n", search, t);
+        } else {
+            printf("%-20.20s  [%s]  OK\n", search, t);
         }
     }
 
@@ -37,7 +92,16 @@ void check_integrity(vector_t *old_vec, vector_t *new_vec) {
         if (cur->parent_id == 0)
             continue;
 
-        if (find_by_name(old_vec, cur->name) == NULL)
-            printf("%-40s NEW\n", cur->name);
+        build_path(new_vec, cur, new_path, sizeof(new_path));
+
+        if (has_prefix)
+            snprintf(search, sizeof(search), "%s/%s", prefix, new_path);
+        else
+            strncpy(search, new_path, sizeof(search) - 1);
+
+        if (find_by_path(old_vec, search) == NULL) {
+            const char *t = (cur->type == TYPE_FILE) ? "FILE" : "DIR ";
+            printf("%-20.20s  [%s]  NEW\n", new_path, t);
+        }
     }
 }
