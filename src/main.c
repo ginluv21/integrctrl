@@ -1,5 +1,6 @@
 #include "check.h"
 #include "db.h"
+#include <sys/stat.h>
 
 int main(int argc, char *argv[]) {
     prog_opts opts;
@@ -23,10 +24,19 @@ int main(int argc, char *argv[]) {
         vec_push(vec, root_rec);
 
         // Сканируем папку (передаем id корневой записи как parent_id)
-        scan_directory(opts.target_dir, root_rec->id, &next_id, vec);
+        scan_directory(opts.target_dir, root_rec->id, &next_id, vec, opts.recursive);
 
         // Выводим результат
         print_vector(vec);
+
+        // Создаем папку для базы если её нет
+        char dir_buf[1024];
+        strncpy(dir_buf, opts.db_file, sizeof(dir_buf) - 1);
+        char *slash = strrchr(dir_buf, '/');
+        if (slash != NULL) {
+            *slash = '\0';
+            mkdir(dir_buf, 0755);
+        }
 
         // Сохраняем базу в файл
         if (db_save(opts.db_file, vec, opts.recursive) == 0)
@@ -57,7 +67,7 @@ int main(int argc, char *argv[]) {
         memset(root_rec->md5, 0, 16);
         vec_push(new_vec, root_rec);
 
-        scan_directory(opts.target_dir, root_rec->id, &next_id, new_vec);
+        scan_directory(opts.target_dir, root_rec->id, &next_id, new_vec, db_recursive);
 
         printf("\n");
         check_integrity(old_vec, new_vec);

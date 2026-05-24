@@ -47,7 +47,7 @@ void parse_args(int argc, char *argv[], prog_opts *opts) {
 }
 
 void scan_directory(const char *dir_path, int parent_id, int *next_id,
-                    vector_t *vec) {
+                    vector_t *vec, int recursive) {
     DIR *dir = opendir(dir_path);
     if (dir == NULL) {
         fprintf(stderr, "Ошибка: не удалось открыть директорию %s\n", dir_path);
@@ -102,11 +102,17 @@ void scan_directory(const char *dir_path, int parent_id, int *next_id,
             }
 
         } else if (entry->d_type == DT_DIR) {
-            rec->type =
-                TYPE_DIR; // Для директорий md5 уже заполнен нулями через memset
+            rec->type = TYPE_DIR;
         }
 
         vec_push(vec, rec);
+
+        if (entry->d_type == DT_DIR && recursive) {
+            char full_path[1024];
+            snprintf(full_path, sizeof(full_path), "%s/%s", dir_path,
+                     entry->d_name);
+            scan_directory(full_path, rec->id, next_id, vec, recursive);
+        }
     }
 
     closedir(dir);

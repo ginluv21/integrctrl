@@ -33,7 +33,6 @@ void parse_args(
 void print_usage(const char *prog_name); // Функция для вывода справки по
                                          // использованию программы
 void scan_directory(const char *dir_path, int parent_id, int *next_id,
-                    vector_t *vec); // Рекурсивная функция для обхода директории
-                                    // и заполнения вектора file_rec
+                    vector_t *vec, int recursive);
 
 #endif
