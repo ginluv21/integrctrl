@@ -2,8 +2,6 @@
 #include "db.h"
 #include "integrctrl.h"
 #include <dirent.h>
-#include <sys/stat.h>
-#include <time.h>
 #include <unistd.h>
 
 void print_usage(const char *prog_name) {
@@ -23,20 +21,20 @@ void parse_args(int argc, char *argv[], prog_opts *opts) {
 
     while ((opt = getopt(argc, argv, "scrf:")) != -1) {
         switch (opt) {
-        case 's':
-            opts->mode = 's';
-            break;
-        case 'c':
-            opts->mode = 'c';
-            break;
-        case 'r':
-            opts->recursive = 1;
-            break;
-        case 'f':
-            opts->db_file = optarg;
-            break;
-        default:
-            print_usage(argv[0]);
+            case 's':
+                opts->mode = 's';
+                break;
+            case 'c':
+                opts->mode = 'c';
+                break;
+            case 'r':
+                opts->recursive = 1;
+                break;
+            case 'f':
+                opts->db_file = optarg;
+                break;
+            default:
+                print_usage(argv[0]);
         }
     }
 
@@ -142,15 +140,7 @@ void run_save(prog_opts *opts) {
 
     scan_directory(opts->target_dir, root_rec->id, &next_id, vec, opts->recursive);
 
-    // print_vector(vec);
-
-    char dir_buf[1024];
-    strncpy(dir_buf, opts->db_file, sizeof(dir_buf) - 1);
-    char *slash = strrchr(dir_buf, '/');
-    if (slash != NULL) {
-        *slash = '\0';
-        mkdir(dir_buf, 0755);
-    }
+    //print_vector(vec);
 
     if (db_save(opts->db_file, vec, opts->recursive) == 0)
         printf("[Сохранение] База записана в %s (%zu объектов)\n", opts->db_file, vec_len(vec));
@@ -164,8 +154,7 @@ void run_check(prog_opts *opts) {
     printf("\n[Проверка] Начинаем сверку с базой %s...\n", opts->db_file);
 
     int db_recursive = 0;
-    time_t saved_at = 0;
-    vector_t *old_vec = db_load(opts->db_file, &db_recursive, &saved_at);
+    vector_t *old_vec = db_load(opts->db_file, &db_recursive);
     if (old_vec == NULL) {
         fprintf(stderr, "Ошибка: не удалось загрузить базу %s\n", opts->db_file);
         return;
@@ -199,10 +188,6 @@ void run_check(prog_opts *opts) {
         }
     }
 
-    char time_buf[64];
-    struct tm *tm_info = localtime(&saved_at);
-    strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", tm_info);
-    printf("[Проверка] База сохранена: %s\n", time_buf);
     printf("[Проверка] Директория: %s\n", target_dir);
 
     vector_t *new_vec = vec_create(10);

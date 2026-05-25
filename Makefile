@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -I include
 
 all:
-	mkdir -p build
+	mkdir -p build data
 	$(CC) $(CFLAGS) src/*.c -o build/integrctrl
 
 clean:

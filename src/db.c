@@ -1,4 +1,5 @@
-#include "db.h"
+#include "../include/db.h"
+#include "vector.h"
 
 int db_save(const char *path, vector_t *vec, int recursive) {
     if (path == NULL || vec == NULL)
@@ -15,8 +16,6 @@ int db_save(const char *path, vector_t *vec, int recursive) {
     hdr.magic = IC_MAGIC;
     hdr.record_count = (unsigned int)vec_len(vec);
     hdr.recursive = recursive;
-    hdr.saved_at = time(NULL);
-
     fwrite(&hdr, sizeof(db_header), 1, f);
 
     for (size_t i = 0; i < vec_len(vec); i++) {
@@ -28,7 +27,7 @@ int db_save(const char *path, vector_t *vec, int recursive) {
     return 0;
 }
 
-vector_t *db_load(const char *path, int *recursive_out, time_t *saved_at_out) {
+vector_t *db_load(const char *path, int *recursive_out) {
     if (path == NULL)
         return NULL;
 
@@ -55,8 +54,6 @@ vector_t *db_load(const char *path, int *recursive_out, time_t *saved_at_out) {
 
     if (recursive_out != NULL)
         *recursive_out = hdr.recursive;
-    if (saved_at_out != NULL)
-        *saved_at_out = hdr.saved_at;
 
     vector_t *vec = vec_create(hdr.record_count);
     if (vec == NULL) {
@@ -64,7 +61,7 @@ vector_t *db_load(const char *path, int *recursive_out, time_t *saved_at_out) {
         return NULL;
     }
 
-    for (unsigned int i = 0; i < hdr.record_count; i++) {
+    for (size_t i = 0; i < hdr.record_count; i++) {
         file_rec *rec = malloc(sizeof(file_rec));
         if (rec == NULL) {
             fprintf(stderr, "Ошибка выделения памяти\n");
