@@ -1,6 +1,6 @@
 #include "check.h"
 
-static file_rec *find_by_id(vector_t *vec, int id) {
+static file_rec *find_by_id(vector_t *vec, int id) { // Ищем запись по id
     for (size_t i = 0; i < vec_len(vec); i++) {
         file_rec *rec = vec_get(vec, i);
         if (rec->id == id)
@@ -9,18 +9,18 @@ static file_rec *find_by_id(vector_t *vec, int id) {
     return NULL;
 }
 
-static void build_path(vector_t *vec, file_rec *rec, char *buf, size_t size) {
+static void build_path(vector_t *vec, file_rec *rec, char *buf, size_t size) { // Строим путь от корня до rec
     if (rec->parent_id == 0) {
         buf[0] = '\0';
         return;
     }
-    file_rec *parent = find_by_id(vec, rec->parent_id);
+    file_rec *parent = find_by_id(vec, rec->parent_id); // Ищем родителя
     if (parent == NULL || parent->parent_id == 0) {
         strncpy(buf, rec->name, size - 1);
         buf[size - 1] = '\0';
         return;
     }
-    build_path(vec, parent, buf, size);
+    build_path(vec, parent, buf, size); // Рекурсивно строим путь до родителя
     size_t len = strlen(buf);
     if (len + 1 < size) {
         buf[len] = '/';
@@ -29,7 +29,7 @@ static void build_path(vector_t *vec, file_rec *rec, char *buf, size_t size) {
     }
 }
 
-static file_rec *find_by_path(vector_t *vec, const char *path) {
+static file_rec *find_by_path(vector_t *vec, const char *path) { // Ищем запись по пути от корня
     char buf[2048];
     for (size_t i = 0; i < vec_len(vec); i++) {
         file_rec *rec = vec_get(vec, i);
@@ -42,14 +42,14 @@ static file_rec *find_by_path(vector_t *vec, const char *path) {
     return NULL;
 }
 
-static int md5_equal(unsigned char *a, unsigned char *b) {
+static int md5_equal(unsigned char *a, unsigned char *b) { // Сравниваем два MD5-хеша
     for (int i = 0; i < 16; i++)
         if (a[i] != b[i])
             return 0;
     return 1;
 }
 
-void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix,
+void check_integrity(vector_t *old_vec, vector_t *new_vec, const char *prefix, 
                      int stats[4], int recursive) {
     char old_path[2048];
     char new_path[2048];

@@ -1,6 +1,5 @@
 build/
 data/
-docs/
 *.pdf
 *.o
 *.a

@@ -67,8 +67,7 @@ void scan_directory(const char *dir_path, int parent_id, int *next_id,
 
     while ((entry = readdir(dir)) !=
            NULL) { // Читаем объекты внутри папки один за другим
-        // Пропускаем служебные ссылки "." и ".."
-        // Если их не пропустить, программа зациклится.
+        // Пропускаем служебные ссылки . и ..
         if (strcmp(entry->d_name, ".") == 0 ||
             strcmp(entry->d_name, "..") == 0) {
             continue;
@@ -79,7 +78,7 @@ void scan_directory(const char *dir_path, int parent_id, int *next_id,
             continue;
         }
 
-        // Создаем file_rec через malloc
+        // Создаем file_rec 
         file_rec *rec = malloc(sizeof(file_rec));
         if (rec == NULL) {
             fprintf(stderr, "Ошибка выделения памяти для файла %s\n",
@@ -172,14 +171,14 @@ void run_check(prog_opts *opts) {
         return;
     }
 
-    // Читаем корневую директорию из базы
+    // Читаем папку из базы
     file_rec *db_root_rec = vec_get(old_vec, 0);
     const char *db_root = db_root_rec->name;
 
-    // Если пользователь передал директорию - используем её, иначе из базы
+    // передал папку иначе из базы
     const char *target_dir = (opts->target_dir != NULL) ? opts->target_dir : db_root;
 
-    // Вычисляем префикс - относительный путь от db_root до target_dir
+    // Вычисляем отн путь от db_root до target_dir
     char prefix[1024] = "";
     if (opts->target_dir != NULL && strcmp(opts->target_dir, db_root) != 0) {
         char root_buf[1024], tgt_buf[1024];
@@ -217,7 +216,7 @@ void run_check(prog_opts *opts) {
     memset(root_rec->md5, 0, 16);
     vec_push(new_vec, root_rec);
 
-    // Рекурсия: берем из аргументов, если не указана - из базы
+    // Рекурсия берем из аргументов если не указана из базы
     int recursive = opts->recursive;
     scan_directory(target_dir, root_rec->id, &next_id, new_vec, recursive);
 
